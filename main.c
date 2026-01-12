@@ -8,20 +8,19 @@
 void display_menu();
 
 int main() {
-    setlocale(LC_ALL, "pt_PT.UTF-8");
-    
+    setlocale(LC_ALL, "pt_br.UTF-8");
     Movie movies[MAX_MOVIES];
     int total_movies = 0;
     int option;
     
     clear_screen();
     printf("===========================================\n");
-    printf("     SISTEMA DE GESTAO DE FILMES\n");
+    printf("     SISTEMA DE GESTÃO DE FILMES\n");
     printf("===========================================\n\n");
     
     do {
         display_menu();
-        option = get_valid_int("Escolha uma opcao (0-9): ", 0, 9);
+        option = get_valid_int("Escolha uma opção (0-9): ", 0, 9);
         
         switch(option) {
             case 1:
@@ -50,7 +49,33 @@ int main() {
             case 6:
                 break;
 
-            case 7:
+                       case 7:
+                clear_screen();
+                if(total_movies > 0) {
+                    printf("=== LIMPAR TODOS OS FILMES ===\n\n");
+                    printf("Tem certeza que deseja limpar TODOS os %d filmes da memória?\n", total_movies);
+                    printf("Esta ação não pode ser desfeita! (S/N): ");
+                    
+                    char confirm;
+                    scanf(" %c", &confirm);
+                    clear_input_buffer();
+                    
+                    if(toupper(confirm) == 'S') {
+                        memset(movies, 0, sizeof(Movie) * total_movies);
+                        total_movies = 0;
+                        
+                        printf("\nTodos os filmes foram REMOVIDOS da memória!\n");
+                        printf("Memória totalmente zerada. Total de filmes: 0\n");
+                    } else {
+                        printf("\nOperação cancelada.\n");
+                    }
+                } else {
+                    printf("Nenhum filme na memória para limpar.\n");
+                }
+                
+                printf("\nPressione Enter para continuar...");
+                clear_input_buffer();
+                getchar();
                 break;
                 
             case 8:  
@@ -73,13 +98,10 @@ int main() {
                     option = -1; 
                     break;
                 }
-                
-                printf("\nObrigado por usar o Sistema de Gestao de Filmes!\n");
-                printf("Total de filmes no sistema: %d\n", total_movies);
                 break;
                 
             default:
-                printf("Opcao invalida!\n");
+                printf("Opção inválida!\n");
                 break;
         }
         
