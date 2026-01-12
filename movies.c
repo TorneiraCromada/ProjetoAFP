@@ -70,7 +70,18 @@ float get_valid_float(const char *prompt, float min, float max) {
     clear_input_buffer();
     return value;
 }
-
+    int find_available_code(Movie movies[], int total) {
+        if(total == 0) {
+            return 1;
+        }
+        bubble_sort_code(movies, total);
+        for(int i = 0; i < total; i++) {
+            if(movies[i].code != i + 1) {
+                return i + 1; 
+            }
+        }
+        return movies[total - 1].code + 1;
+    }
 // ==================== FUNÇÕES DE ORDENAÇÃO ====================
 
 void bubble_sort_code(Movie movies[], int total) {
@@ -324,7 +335,7 @@ void show_movie_details(int code, Movie movies[], int total) {
     printf("Ano:        %d\n", movie->year);
     printf("Duracao:    %d minutos\n", movie->duration);
     printf("Nota:       %.1f/5.0\n", movie->rating);
-    printf("Favorito:   %s\n", movie->favorite ? "[*] Sim" : "[ ] Nao");
+    printf("Favoritos:  %d votos\n", movie->favorite);
     printf("Receita:    $%.2f milhoes\n", movie->revenue);
     printf("\nDescricao:\n%s\n", movie->description);
     printf("\nAtores:\n");
@@ -381,20 +392,10 @@ void add_movie_interactive(Movie movies[], int *total) {
     
     printf("=== ADICIONAR NOVO FILME ===\n\n");
     
-    // Codigo
-    new_movie.code = get_valid_int("Codigo do filme: ", 1, 999999);
-    
-    // Verificar se codigo ja existe
-    for(int i = 0; i < *total; i++) {
-        if(movies[i].code == new_movie.code) {
-            printf("ERRO: Ja existe um filme com codigo %d!\n", new_movie.code);
-            printf("Pressione Enter para continuar...");
-            clear_input_buffer();
-            getchar();
-            return;
-        }
-    }
-    
+    // Gerar código automaticamente (menor código disponível)
+    new_movie.code = find_available_code(movies, *total);
+    printf("Codigo automaticamente gerado: %d\n", new_movie.code);
+
     // Titulo
     printf("Titulo: ");
     fgets(new_movie.title, sizeof(new_movie.title), stdin);
@@ -440,7 +441,7 @@ void add_movie_interactive(Movie movies[], int *total) {
     new_movie.rating = get_valid_float("Nota (0.0-10.0): ", 0.0, 10.0);
     
     // Favorito
-    new_movie.favorite = get_valid_int("Favorito? (0=Nao, 1=Sim): ", 0, 1);
+    new_movie.favorite = get_valid_int("Contagem de favoritos: ", 0, 10000);
     
     // Receita
     new_movie.revenue = get_valid_float("Receita (em milhoes): ", 0.0, 10000.0);
@@ -766,6 +767,136 @@ void show_movie_menu(Movie movies[], int total) {
     int code = get_valid_int("Digite o codigo do filme: ", 1, 999999);
     
     show_movie_details(code, movies, total);
+    
+    printf("\nPressione Enter para continuar...");
+    clear_input_buffer();
+    getchar();
+}
+
+// ==================== NOVAS FUNÇÕES DE IMPORTAR/EXPORTAR ====================
+
+void import_movies_from_file(Movie movies[], int *total) {
+    char filename[50];
+    char full_path[80];  
+    
+    printf("=== IMPORTAR FILMES DE ARQUIVO ===\n\n");
+    printf("Nome do arquivo CSV (sem 'files/'): ");
+    fgets(filename, sizeof(filename), stdin);
+    filename[strcspn(filename, "\n")] = 0;
+    snprintf(full_path, sizeof(full_path), "files/%s", filename);
+    
+    // Verificar se o arquivo existe
+    FILE *test = fopen(full_path, "r");
+    if(test == NULL) {
+        printf("ERRO: Arquivo '%s' nao encontrado na pasta 'files/'!\n", filename);
+        printf("\nPressione Enter para continuar...");
+        clear_input_buffer();
+        getchar();
+        return;
+    }
+    fclose(test);
+    
+    // Perguntar ao usuário se quer importar
+    printf("\nDeseja importar filmes do arquivo 'files/%s'? (S/N): ", filename);
+    char confirm;
+    scanf(" %c", &confirm);
+    clear_input_buffer();
+    
+    if(toupper(confirm) != 'S') {
+        printf("Importacao cancelada.\n");
+        printf("\nPressione Enter para continuar...");
+        clear_input_buffer();
+        getchar();
+        return;
+    }
+    
+    // Verificar se há espaço suficiente
+    int available_space = MAX_MOVIES - *total;
+    if(available_space <= 0) {
+        printf("ERRO: Nao ha espaço para importar mais filmes! Limite maximo: %d\n", MAX_MOVIES);
+        printf("\nPressione Enter para continuar...");
+        clear_input_buffer();
+        getchar();
+        return;
+    }
+    
+    // Importar filmes usando a função existente
+    int imported_count = load_movies_from_csv(full_path, &movies[*total], available_space);
+    
+    if(imported_count > 0) {
+        *total += imported_count;
+        
+        // Remover duplicados após importação
+        remove_duplicate_movies(movies, total);
+        
+        printf("\nSUCESSO: %d filme(s) importado(s) do arquivo '%s'!\n", imported_count, filename);
+        printf("Total de filmes no sistema agora: %d\n", *total);
+    } else {
+        printf("Nenhum filme foi importado. O arquivo pode estar vazio ou com formato incorreto.\n");
+    }
+    
+    printf("\nPressione Enter para continuar...");
+    clear_input_buffer();
+    getchar();
+}
+
+void export_movies_to_file(Movie movies[], int total) {
+    char filename[50];
+    char full_path[80];
+    
+    printf("=== EXPORTAR FILMES PARA ARQUIVO ===\n\n");
+    
+    if(total == 0) {
+        printf("Nenhum filme para exportar.\n");
+        printf("\nPressione Enter para continuar...");
+        clear_input_buffer();
+        getchar();
+        return;
+    }
+    
+    printf("Nome do arquivo CSV (ex: meus_filmes.csv): ");
+    fgets(filename, sizeof(filename), stdin);
+    filename[strcspn(filename, "\n")] = 0;
+    
+    // Adicionar extensão .csv se não tiver
+    if(strstr(filename, ".csv") == NULL && strstr(filename, ".CSV") == NULL) {
+        // Verificar se cabe a extensão
+        if(strlen(filename) + 4 < sizeof(filename)) {
+            strcat(filename, ".csv");
+        } else {
+            printf("ERRO: Nome do arquivo muito longo!\n");
+            printf("\nPressione Enter para continuar...");
+            clear_input_buffer();
+            getchar();
+            return;
+        }
+    }
+    
+    // Adicionar "files/" automaticamente
+    snprintf(full_path, sizeof(full_path), "files/%s", filename);
+    
+    // Perguntar ao usuário se quer exportar
+    printf("\nDeseja exportar %d filme(s) para o arquivo 'files/%s'? (S/N): ", total, filename);
+    char confirm;
+    scanf(" %c", &confirm);
+    clear_input_buffer();
+    
+    if(toupper(confirm) != 'S') {
+        printf("Exportacao cancelada.\n");
+        printf("\nPressione Enter para continuar...");
+        clear_input_buffer();
+        getchar();
+        return;
+    }
+    
+    // Usar a função save_movies_to_csv existente
+    int exported_count = save_movies_to_csv(full_path, movies, total);
+    
+    if(exported_count > 0) {
+        printf("\nSUCESSO: %d filme(s) exportado(s) para o arquivo 'files/%s'!\n", exported_count, filename);
+    } else {
+        printf("ERRO: Nao foi possivel exportar os filmes.\n");
+    }
     
     printf("\nPressione Enter para continuar...");
     clear_input_buffer();

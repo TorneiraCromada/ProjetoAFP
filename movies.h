@@ -49,6 +49,7 @@ void clear_screen();
 void clear_input_buffer();
 int get_valid_int(const char *prompt, int min, int max);
 float get_valid_float(const char *prompt, float min, float max);
+int find_available_code(Movie movies[], int total);
 
 // Funções de ordenação
 void bubble_sort_code(Movie movies[], int total);
@@ -83,5 +84,6 @@ void remove_duplicate_movies(Movie movies[], int *total);
 // Funções de menu
 void search_movie_menu(Movie movies[], int total);
 void show_movie_menu(Movie movies[], int total);
-
+void import_movies_from_file(Movie movies[], int *total);
+void export_movies_to_file(Movie movies[], int total);
 #endif
