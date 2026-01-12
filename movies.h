@@ -81,6 +81,10 @@ const char* genre_to_string(Genre genre);
 // Função para remover duplicados
 void remove_duplicate_movies(Movie movies[], int *total);
 
+// Funções de alteração
+void alter_movie(Movie movies[], int *total, Movie new_info);
+void alter_movie_interactive(Movie movies[], int *total);
+
 // Funções de menu
 void search_movie_menu(Movie movies[], int total);
 void show_movie_menu(Movie movies[], int total);
