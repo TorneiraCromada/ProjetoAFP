@@ -395,7 +395,7 @@ void add_movie_interactive(Movie movies[], int *total) {
     // Gerar código automaticamente (menor código disponível)
     new_movie.code = find_available_code(movies, *total);
     printf("Codigo automaticamente gerado: %d\n", new_movie.code);
-
+    
     // Titulo
     printf("Titulo: ");
     fgets(new_movie.title, sizeof(new_movie.title), stdin);
@@ -453,6 +453,129 @@ void add_movie_interactive(Movie movies[], int *total) {
     clear_input_buffer();
     getchar();
 }
+
+// ==================== FUNÇÕES DE ALTERAÇÃO ====================
+
+void alter_movie(Movie movies[], int *total, Movie new_info){
+    // Ir até ao filme
+    for(int i = 0; i < *total; i++){
+        if(movies[i].code == new_info.code){
+            movies[i] = new_info;
+            printf("Informações do filme '%s' alteradas com sucesso! (Codigo: %d)\n",
+            new_info.title, new_info.code);
+            return;
+        }
+    }
+
+    //Caso o id não seja encontrado
+    printf("ERRO: Codigo %d não encontrado", new_info.code);
+}
+
+void alter_movie_interactive(Movie movies[], int *total){
+    Movie new_info;
+    int check;
+
+    printf("=== ALTERAR FILME ===\n\n");
+
+    //Codigo para pesquisa
+    new_info.code = get_valid_int("Codigo do filme: ", 1, 999999);
+
+    //Verificar se o codigo existe
+    check = binary_search(new_info.code, movies, *total);
+
+    if (check == -1)
+    {
+        printf("ERRO: Código %d não existe!", new_info.code);
+        printf("Pressione Enter para continuar...");
+        clear_input_buffer();
+        getchar();
+        return;
+    }
+
+    // Titulo
+    printf("Titulo: ");
+    fgets(new_info.title, sizeof(new_info.title), stdin);
+    new_info.title[strcspn(new_info.title, "\n")] = 0;
+    
+    // Genero
+    printf("\nGeneros disponiveis:\n");
+    for(int i = 0; i < GENRE_COUNT; i++) {
+        printf("%2d. %s\n", i, genre_names[i]);
+    }
+    int genre_choice = get_valid_int("Escolha o genero (numero): ", 0, GENRE_COUNT - 1);
+    new_info.genre = (Genre)genre_choice;
+    
+    // Descricao
+    printf("Descricao: ");
+    fgets(new_info.description, sizeof(new_info.description), stdin);
+    new_info.description[strcspn(new_info.description, "\n")] = 0;
+    
+    // Diretor
+    printf("Diretor: ");
+    fgets(new_info.director, sizeof(new_info.director), stdin);
+    new_info.director[strcspn(new_info.director, "\n")] = 0;
+    
+    // Atores
+    printf("Quantos atores deseja adicionar? (1-10): ");
+    int num_actors = get_valid_int("", 1, 10);
+    new_info.num_actors = 0;
+    
+    for(int i = 0; i < num_actors; i++) {
+        printf("Ator %d: ", i + 1);
+        fgets(new_info.actors[i], sizeof(new_info.actors[i]), stdin);
+        new_info.actors[i][strcspn(new_info.actors[i], "\n")] = 0;
+        new_info.num_actors++;
+    }
+    
+    // Ano
+    new_info.year = get_valid_int("Ano de lancamento: ", 1888, 2024);
+    
+    // Duracao
+    new_info.duration = get_valid_int("Duracao (minutos): ", 1, 500);
+    
+    // Nota
+    new_info.rating = get_valid_float("Nota (0.0-10.0): ", 0.0, 10.0);
+    
+    // Favorito
+    new_info.favorite = get_valid_int("Contagem de favoritos: ", 0, 10000);
+    
+    // Receita
+    new_info.revenue = get_valid_float("Receita (em milhoes): ", 0.0, 10000.0);
+    
+    // Adicionar ao array
+    alter_movie(movies, total, new_info);
+    printf("\nPressione Enter para continuar...");
+    clear_input_buffer();
+    getchar();
+    
+}
+
+// ==================== FUNÇÕES DE REMOÇÃO ====================
+
+void remove_movie(Movie movies[], int *total){
+    int remove_code, check;
+
+    //Codigo para remover
+    remove_code = get_valid_int("Codigo do filme: ", 1, 999999);
+
+    check = binary_search(remove_code, movies, *total);
+
+    if (check == -1)
+    {
+        printf("ERRO: Código %d não encontrado!", remove_code);
+        return;
+    }
+
+    movies[check].code = movies[*total].code;
+    bubble_sort_code(movies, *total);
+    *total = *total -1;
+
+    printf("Filme removido com sucesso!\n");
+    printf("\nPressione Enter para continuar...");
+    clear_input_buffer();
+    getchar();
+}
+
 
 // ==================== FUNÇÕES DE ARQUIVO ====================
 

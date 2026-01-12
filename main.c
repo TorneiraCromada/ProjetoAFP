@@ -44,9 +44,12 @@ int main() {
                 break;
                 
             case 5:
+                clear_screen();
+                alter_movie_interactive(movies, &total_movies);
                 break;
 
             case 6:
+                clear_screen();
                 break;
 
                        case 7:
