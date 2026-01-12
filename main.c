@@ -50,6 +50,7 @@ int main() {
 
             case 6:
                 clear_screen();
+                remove_movie(movies, &total_movies);
                 break;
 
                        case 7:

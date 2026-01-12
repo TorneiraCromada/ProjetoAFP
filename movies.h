@@ -90,4 +90,7 @@ void search_movie_menu(Movie movies[], int total);
 void show_movie_menu(Movie movies[], int total);
 void import_movies_from_file(Movie movies[], int *total);
 void export_movies_to_file(Movie movies[], int total);
+ //Função para excluir filme
+ void remove_movie(Movie movies[], int *total);
+ 
 #endif
